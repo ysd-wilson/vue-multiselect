@@ -67,7 +67,8 @@ export default {
       search: '',
       isOpen: false,
       preferredOpenDirection: 'below',
-      optimizedHeight: this.maxHeight
+      optimizedHeight: this.maxHeight,
+      onHoverItem: false,
     }
   },
   props: {
@@ -638,6 +639,19 @@ export default {
       if (this.search.length === 0 && Array.isArray(this.internalValue) && this.internalValue.length) {
         this.removeElement(this.internalValue[this.internalValue.length - 1], false)
       }
+    },
+    onFocus () {
+      console.log('onFocus', !this.onHoverItem)
+      if(!this.onHoverItem){
+        this.activate();
+      }
+    },
+    itemHover () {
+      this.onHoverItem = true;
+    },
+    itemLeave () {
+      this.onHoverItem = false;
+      this.$el.blur()
     },
     /**
      * Opens the multiselect’s dropdown.

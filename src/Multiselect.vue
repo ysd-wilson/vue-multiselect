@@ -2,7 +2,7 @@
   <div
     :tabindex="searchable ? -1 : tabindex"
     :class="{ 'multiselect--active': isOpen, 'multiselect--disabled': disabled, 'multiselect--above': isAbove }"
-    @focus="activate()"
+    @focus="onFocus"
     @blur="searchable ? false : deactivate()"
     @keydown.self.down.prevent="pointerForward()"
     @keydown.self.up.prevent="pointerBackward()"
@@ -24,14 +24,17 @@
           :is-open="isOpen"
         >
           <div class="multiselect__tags-wrap" v-show="visibleValues.length > 0">
-            <template v-for="(option, index) of visibleValues" @mousedown.prevent>
-              <slot name="tag" :option="option" :search="search" :remove="removeElement">
-                <span class="multiselect__tag" :key="index">
-                  <span v-text="getOptionLabel(option)"></span>
-                  <i tabindex="1" @keypress.enter.prevent="removeElement(option)"  @mousedown.prevent="removeElement(option)" class="multiselect__tag-icon"></i>
-                </span>
-              </slot>
-            </template>
+            <draggable v-model="visibleValues">
+              <template v-for="(option, index) of visibleValues">
+                <slot name="tag" :option="option" :search="search" :remove="removeElement">
+                  <span class="multiselect__tag" @mouseover="itemHover" @mouseleave="itemLeave">
+                    <span v-text="getOptionLabel(option)" :key="index"></span>
+                    <i tabindex="1" @keypress.enter.prevent="removeElement(option)"  @mousedown.prevent="removeElement(option)" class="multiselect__tag-icon"></i>
+                  </span>
+                </slot>
+              </template>
+            </draggable>
+
           </div>
           <template v-if="internalValue && internalValue.length > limit">
             <slot name="limit">
@@ -157,10 +160,12 @@
 <script>
 import multiselectMixin from './multiselectMixin'
 import pointerMixin from './pointerMixin'
+import draggable from 'vuedraggable'
 
 export default {
   name: 'vue-multiselect',
   mixins: [multiselectMixin, pointerMixin],
+  components: {draggable},
   props: {
     /**
      * name attribute to match optional label element
@@ -297,7 +302,7 @@ export default {
     tabindex: {
       type: Number,
       default: 0
-    }
+    },
   },
   computed: {
     isSingleLabelVisible () {
@@ -310,8 +315,14 @@ export default {
     isPlaceholderVisible () {
       return !this.internalValue.length && (!this.searchable || !this.isOpen)
     },
-    visibleValues () {
-      return this.multiple ? this.internalValue.slice(0, this.limit) : []
+    visibleValues: {
+      set: function(value) {
+        console.log(value);
+        this.$emit("input", value);
+      },
+      get: function() {
+        return this.multiple ? this.internalValue.slice(0, this.limit) : []
+      }
     },
     singleValue () {
       return this.internalValue[0]
